@@ -1,111 +1,315 @@
-import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, AlertCircle, RefreshCw } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malaysia Prayer Times</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans p-6 md:p-12 min-h-screen">
+    <div class="max-w-3xl mx-auto space-y-8">
+        
+        <header class="border-b border-slate-200 pb-4">
+            <h1 class="text-3xl font-semibold text-slate-900 tracking-tight">Malaysia Prayer Times</h1>
+            <p class="text-slate-600 mt-2">Data sourced from JAKIM.</p>
+        </header>
 
-const MALAYSIA_ZONES = [
-  { code: 'WLY01', name: 'Kuala Lumpur & Putrajaya' },
-  { code: 'WLY02', name: 'Labuan' },
-  { code: 'SGR01', name: 'Selangor - Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, S.Alam' },
-  { code: 'SGR02', name: 'Selangor - Kuala Selangor, Sabak Bernam' },
-  { code: 'SGR03', name: 'Selangor - Klang, Kuala Langat' },
-  { code: 'JHR01', name: 'Johor - Pulau Aur dan Pulau Pemanggil' },
-  { code: 'JHR02', name: 'Johor - Johor Bahru, Kota Tinggi, Mersing, Kulai' },
-  { code: 'JHR03', name: 'Johor - Kluang, Pontian' },
-  { code: 'JHR04', name: 'Johor - Batu Pahat, Muar, Segamat, Gemas Johor, Tangkak' },
-  { code: 'KDH01', name: 'Kedah - Kota Setar, Kubang Pasu, Pokok Sena' },
-  { code: 'KDH02', name: 'Kedah - Kuala Muda, Yan, Pendang' },
-  { code: 'KDH03', name: 'Kedah - Padang Terap, Sik' },
-  { code: 'KDH04', name: 'Kedah - Baling' },
-  { code: 'KDH05', name: 'Kedah - Bandar Baharu, Kulim' },
-  { code: 'KDH06', name: 'Kedah - Langkawi' },
-  { code: 'KDH07', name: 'Kedah - Puncak Gunung Jerai' },
-  { code: 'KTN01', name: 'Kelantan - Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai, Mukim Chiku' },
-  { code: 'KTN02', name: 'Kelantan - Gua Musang, Jeli, Jajahan Kecil Lojing' },
-  { code: 'MLK01', name: 'Melaka - Seluruh Negeri Melaka' },
-  { code: 'NGS01', name: 'Negeri Sembilan - Tampin, Jempol' },
-  { code: 'NGS02', name: 'Negeri Sembilan - Jelebu, Kuala Pilah, Rembau' },
-  { code: 'NGS03', name: 'Negeri Sembilan - Port Dickson, Seremban' },
-  { code: 'PHG01', name: 'Pahang - Pulau Tioman' },
-  { code: 'PHG02', name: 'Pahang - Kuantan, Pekan, Muadzam Shah' },
-  { code: 'PHG03', name: 'Pahang - Jerantut, Temerloh, Maran, Bera, Chenor, Jengka' },
-  { code: 'PHG04', name: 'Pahang - Bentong, Lipis, Raub' },
-  { code: 'PHG05', name: 'Pahang - Genting Sempah, Janda Baik, Bukit Tinggi' },
-  { code: 'PHG06', name: 'Pahang - Cameron Highlands, Genting Higlands, Bukit Fraser' },
-  { code: 'PLS01', name: 'Perlis - Kangar, Padang Besar, Arau' },
-  { code: 'PNG01', name: 'Pulau Pinang - Seluruh Negeri Pulau Pinang' },
-  { code: 'PRK01', name: 'Perak - Tapah, Slim River, Tanjung Malim' },
-  { code: 'PRK02', name: 'Perak - Kuala Kangsar, Sg. Siput, Ipoh, Batu Gajah, Kampar' },
-  { code: 'PRK03', name: 'Perak - Lenggong, Gerik, Pengkalan Hulu' },
-  { code: 'PRK04', name: 'Perak - Temengor, Belum' },
-  { code: 'PRK05', name: 'Perak - Kg Gajah, Teluk Intan, Bagan Datuk, Seri Iskandar, Beruas, Parit, Lumut, Sitiawan, Pulau Pangkor' },
-  { code: 'PRK06', name: 'Perak - Selama, Taiping, Bagan Serai, Parit Buntar' },
-  { code: 'PRK07', name: 'Perak - Bukit Larut' },
-  { code: 'SBH01', name: 'Sabah - Bahagian Sandakan (Timur), Bukit Garam, Semawang, Temanggong, Tambisan, Bandar Sandakan, Sukau' },
-  { code: 'SBH02', name: 'Sabah - Beluran, Telupid, Pinangah, Terusan, Kuamut, Bahagian Sandakan (Barat)' },
-  { code: 'SBH03', name: 'Sabah - Lahad Datu, Silabukan, Kunak, Sahabat, Semporna, Tungku, Bahagian Tawau (Timur)' },
-  { code: 'SBH04', name: 'Sabah - Bandar Tawau, Balong, Merotai, Kalabakan, Bahagian Tawau (Barat)' },
-  { code: 'SBH05', name: 'Sabah - Kudat, Kota Marudu, Pitas, Pulau Banggi, Bahagian Kudat' },
-  { code: 'SBH06', name: 'Sabah - Gunung Kinabalu' },
-  { code: 'SBH07', name: 'Sabah - Kota Kinabalu, Ranau, Kota Belud, Tuaran, Penampang, Papar, Putatan, Bahagian Pantai Barat' },
-  { code: 'SBH08', name: 'Sabah - Pensiangan, Keningau, Tambunan, Nabawan, Bahagian Pendalaman (Atas)' },
-  { code: 'SBH09', name: 'Sabah - Beaufort, Kuala Penyu, Sipitang, Tenom, Long Pasia, Membakut, Weston, Bahagian Pendalaman (Bawah)' },
-  { code: 'SWK01', name: 'Sarawak - Limbang, Lawas, Sundar, Trusan' },
-  { code: 'SWK02', name: 'Sarawak - Miri, Niah, Bekenu, Sibuti, Marudi' },
-  { code: 'SWK03', name: 'Sarawak - Pandan, Belaga, Suai, Tatau, Sebauh, Bintulu' },
-  { code: 'SWK04', name: 'Sarawak - Sibu, Mukah, Dalat, Song, Igan, Oya, Balingian, Kanowit, Kapit' },
-  { code: 'SWK05', name: 'Sarawak - Sarikei, Matu, Julau, Rajang, Daro, Bintangor, Belawai' },
-  { code: 'SWK06', name: 'Sarawak - Lubok Antu, Sri Aman, Roban, Debak, Kabong, Lingga, Engkelili, Betong, Spaoh, Pusa, Saratok' },
-  { code: 'SWK07', name: 'Sarawak - Serian, Simunjan, Samarahan, Sebuyau, Meludam' },
-  { code: 'SWK08', name: 'Sarawak - Kuching, Bau, Lundu, Sematan' },
-  { code: 'SWK09', name: 'Sarawak - Zon Khas (Kampung Nyalau)' },
-  { code: 'TRG01', name: 'Terengganu - Kuala Terengganu, Marang, Kuala Nerus' },
-  { code: 'TRG02', name: 'Terengganu - Besut, Setiu' },
-  { code: 'TRG03', name: 'Terengganu - Hulu Terengganu' },
-  { code: 'TRG04', name: 'Terengganu - Dungun, Kemaman' }
-];
+        <section class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+                <div class="flex-1 w-full">
+                    <label for="zone-select" class="block text-sm font-medium text-slate-700 mb-2">
+                        Select Location Zone
+                    </label>
+                    <select id="zone-select" class="w-full bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-md focus:ring-slate-500 focus:border-slate-500 block p-2.5">
+                        <!-- Options populated by JS -->
+                    </select>
+                </div>
 
-export default function App() {
-  const [zone, setZone] = useState('WLY01'); // Default to Kuala Lumpur
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [prayerData, setPrayerData] = useState(null);
-  const [currentTime, setCurrentTime] = useState(new Date());
+                <button id="gps-btn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-md hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 disabled:opacity-50 w-full sm:w-auto transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    Use GPS
+                </button>
+            </div>
+            
+            <div id="error-container" class="hidden mt-4 flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span id="error-message"></span>
+            </div>
+        </section>
 
-  const fetchPrayerData = async (selectedZone) => {
-    setLoading(true);
-    setError(null);
-    try {
-      // Using API waktusolat.app which mirrors JAKIM data
-      const response = await fetch(`https://api.waktusolat.app/v2/solat/${selectedZone}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      // Parse response. The structure usually contains an array of prayers for the current month.
-      const today = new Date();
-      const currentDay = today.getDate();
-      
-      let todayPrayer = null;
+        <section class="flex items-center gap-3 text-slate-700 flex-wrap">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span class="font-medium">Current Time:</span>
+            <span id="current-time" class="font-mono bg-slate-200 px-2 py-1 rounded text-sm">--:--:--</span>
+            <span id="current-date" class="text-sm ml-2 text-slate-500"></span>
+        </section>
 
-      if (data && data.prayers && Array.isArray(data.prayers)) {
-        // Find today's data by matching the date integer. Fallback to index.
-        todayPrayer = data.prayers.find(p => p.day === currentDay) || data.prayers[currentDay - 1];
-      }
+        <div id="loading-container" class="flex justify-center py-12 text-slate-500">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+            <span class="ml-2">Fetching timetable...</span>
+        </div>
 
-      if (!todayPrayer) {
-        throw new Error('Data format unexpected or missing today\'s prayer times.');
-      }
+        <section id="table-container" class="hidden bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-slate-800 text-white">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 font-semibold uppercase tracking-wider">Prayer</th>
+                            <th scope="col" class="px-6 py-4 font-semibold uppercase tracking-wider text-right">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prayer-table-body" class="divide-y divide-slate-200">
+                        <!-- Rows populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 
-      // Normalize keys based on common API responses (handling potential key variations)
-      setPrayerData({
-        Imsak: formatTime(todayPrayer.imsak),
-        Subuh: formatTime(todayPrayer.fajr || todayPrayer.subuh),
-        Syuruk: formatTime(todayPrayer.syuruk),
-        Zohor: formatTime(todayPrayer.dhuhr || todayPrayer.zohor),
-        Asar: formatTime(todayPrayer.asr),
-        Maghrib: formatTime(todayPrayer.maghrib),
+    <script>
+        const MALAYSIA_ZONES = [
+            { code: 'WLY01', name: 'Kuala Lumpur & Putrajaya' },
+            { code: 'WLY02', name: 'Labuan' },
+            { code: 'SGR01', name: 'Selangor - Gombak, Petaling, Sepang, Hulu Langat, Hulu Selangor, S.Alam' },
+            { code: 'SGR02', name: 'Selangor - Kuala Selangor, Sabak Bernam' },
+            { code: 'SGR03', name: 'Selangor - Klang, Kuala Langat' },
+            { code: 'JHR01', name: 'Johor - Pulau Aur dan Pulau Pemanggil' },
+            { code: 'JHR02', name: 'Johor - Johor Bahru, Kota Tinggi, Mersing, Kulai' },
+            { code: 'JHR03', name: 'Johor - Kluang, Pontian' },
+            { code: 'JHR04', name: 'Johor - Batu Pahat, Muar, Segamat, Gemas Johor, Tangkak' },
+            { code: 'KDH01', name: 'Kedah - Kota Setar, Kubang Pasu, Pokok Sena' },
+            { code: 'KDH02', name: 'Kedah - Kuala Muda, Yan, Pendang' },
+            { code: 'KDH03', name: 'Kedah - Padang Terap, Sik' },
+            { code: 'KDH04', name: 'Kedah - Baling' },
+            { code: 'KDH05', name: 'Kedah - Bandar Baharu, Kulim' },
+            { code: 'KDH06', name: 'Kedah - Langkawi' },
+            { code: 'KDH07', name: 'Kedah - Puncak Gunung Jerai' },
+            { code: 'KTN01', name: 'Kelantan - Bachok, Kota Bharu, Machang, Pasir Mas, Pasir Puteh, Tanah Merah, Tumpat, Kuala Krai, Mukim Chiku' },
+            { code: 'KTN02', name: 'Kelantan - Gua Musang, Jeli, Jajahan Kecil Lojing' },
+            { code: 'MLK01', name: 'Melaka - Seluruh Negeri Melaka' },
+            { code: 'NGS01', name: 'Negeri Sembilan - Tampin, Jempol' },
+            { code: 'NGS02', name: 'Negeri Sembilan - Jelebu, Kuala Pilah, Rembau' },
+            { code: 'NGS03', name: 'Negeri Sembilan - Port Dickson, Seremban' },
+            { code: 'PHG01', name: 'Pahang - Pulau Tioman' },
+            { code: 'PHG02', name: 'Pahang - Kuantan, Pekan, Muadzam Shah' },
+            { code: 'PHG03', name: 'Pahang - Jerantut, Temerloh, Maran, Bera, Chenor, Jengka' },
+            { code: 'PHG04', name: 'Pahang - Bentong, Lipis, Raub' },
+            { code: 'PHG05', name: 'Pahang - Genting Sempah, Janda Baik, Bukit Tinggi' },
+            { code: 'PHG06', name: 'Pahang - Cameron Highlands, Genting Higlands, Bukit Fraser' },
+            { code: 'PLS01', name: 'Perlis - Kangar, Padang Besar, Arau' },
+            { code: 'PNG01', name: 'Pulau Pinang - Seluruh Negeri Pulau Pinang' },
+            { code: 'PRK01', name: 'Perak - Tapah, Slim River, Tanjung Malim' },
+            { code: 'PRK02', name: 'Perak - Kuala Kangsar, Sg. Siput, Ipoh, Batu Gajah, Kampar' },
+            { code: 'PRK03', name: 'Perak - Lenggong, Gerik, Pengkalan Hulu' },
+            { code: 'PRK04', name: 'Perak - Temengor, Belum' },
+            { code: 'PRK05', name: 'Perak - Kg Gajah, Teluk Intan, Bagan Datuk, Seri Iskandar, Beruas, Parit, Lumut, Sitiawan, Pulau Pangkor' },
+            { code: 'PRK06', name: 'Perak - Selama, Taiping, Bagan Serai, Parit Buntar' },
+            { code: 'PRK07', name: 'Perak - Bukit Larut' },
+            { code: 'SBH01', name: 'Sabah - Bahagian Sandakan (Timur), Bukit Garam, Semawang, Temanggong, Tambisan, Bandar Sandakan, Sukau' },
+            { code: 'SBH02', name: 'Sabah - Beluran, Telupid, Pinangah, Terusan, Kuamut, Bahagian Sandakan (Barat)' },
+            { code: 'SBH03', name: 'Sabah - Lahad Datu, Silabukan, Kunak, Sahabat, Semporna, Tungku, Bahagian Tawau (Timur)' },
+            { code: 'SBH04', name: 'Sabah - Bandar Tawau, Balong, Merotai, Kalabakan, Bahagian Tawau (Barat)' },
+            { code: 'SBH05', name: 'Sabah - Kudat, Kota Marudu, Pitas, Pulau Banggi, Bahagian Kudat' },
+            { code: 'SBH06', name: 'Sabah - Gunung Kinabalu' },
+            { code: 'SBH07', name: 'Sabah - Kota Kinabalu, Ranau, Kota Belud, Tuaran, Penampang, Papar, Putatan, Bahagian Pantai Barat' },
+            { code: 'SBH08', name: 'Sabah - Pensiangan, Keningau, Tambunan, Nabawan, Bahagian Pendalaman (Atas)' },
+            { code: 'SBH09', name: 'Sabah - Beaufort, Kuala Penyu, Sipitang, Tenom, Long Pasia, Membakut, Weston, Bahagian Pendalaman (Bawah)' },
+            { code: 'SWK01', name: 'Sarawak - Limbang, Lawas, Sundar, Trusan' },
+            { code: 'SWK02', name: 'Sarawak - Miri, Niah, Bekenu, Sibuti, Marudi' },
+            { code: 'SWK03', name: 'Sarawak - Pandan, Belaga, Suai, Tatau, Sebauh, Bintulu' },
+            { code: 'SWK04', name: 'Sarawak - Sibu, Mukah, Dalat, Song, Igan, Oya, Balingian, Kanowit, Kapit' },
+            { code: 'SWK05', name: 'Sarawak - Sarikei, Matu, Julau, Rajang, Daro, Bintangor, Belawai' },
+            { code: 'SWK06', name: 'Sarawak - Lubok Antu, Sri Aman, Roban, Debak, Kabong, Lingga, Engkelili, Betong, Spaoh, Pusa, Saratok' },
+            { code: 'SWK07', name: 'Sarawak - Serian, Simunjan, Samarahan, Sebuyau, Meludam' },
+            { code: 'SWK08', name: 'Sarawak - Kuching, Bau, Lundu, Sematan' },
+            { code: 'SWK09', name: 'Sarawak - Zon Khas (Kampung Nyalau)' },
+            { code: 'TRG01', name: 'Terengganu - Kuala Terengganu, Marang, Kuala Nerus' },
+            { code: 'TRG02', name: 'Terengganu - Besut, Setiu' },
+            { code: 'TRG03', name: 'Terengganu - Hulu Terengganu' },
+            { code: 'TRG04', name: 'Terengganu - Dungun, Kemaman' }
+        ];
+
+        const zoneSelect = document.getElementById('zone-select');
+        const gpsBtn = document.getElementById('gps-btn');
+        const errorContainer = document.getElementById('error-container');
+        const errorMessage = document.getElementById('error-message');
+        const loadingContainer = document.getElementById('loading-container');
+        const tableContainer = document.getElementById('table-container');
+        const prayerTableBody = document.getElementById('prayer-table-body');
+        const currentTimeEl = document.getElementById('current-time');
+        const currentDateEl = document.getElementById('current-date');
+
+        function init() {
+            populateZones();
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            zoneSelect.addEventListener('change', (e) => {
+                fetchPrayerData(e.target.value);
+            });
+
+            gpsBtn.addEventListener('click', locateUser);
+
+            // Default SGR01 for Ampang Jaya, Selangor
+            fetchPrayerData('SGR01');
+        }
+
+        function populateZones() {
+            MALAYSIA_ZONES.forEach(z => {
+                const option = document.createElement('option');
+                option.value = z.code;
+                option.textContent = `${z.name} (${z.code})`;
+                if (z.code === 'SGR01') option.selected = true;
+                zoneSelect.appendChild(option);
+            });
+        }
+
+        function updateClock() {
+            const now = new Date();
+            currentTimeEl.textContent = now.toLocaleTimeString('en-MY', { hour12: true });
+            currentDateEl.textContent = now.toLocaleDateString('en-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function showError(msg) {
+            errorMessage.textContent = msg;
+            errorContainer.classList.remove('hidden');
+            loadingContainer.classList.add('hidden');
+            tableContainer.classList.add('hidden');
+        }
+
+        function hideError() {
+            errorContainer.classList.add('hidden');
+        }
+
+        function formatTime(timeInput) {
+            if (!timeInput) return '--:--';
+            
+            let dateObj = new Date();
+            if (typeof timeInput === 'number') {
+                dateObj = new Date(timeInput * 1000);
+            } else if (typeof timeInput === 'string' && timeInput.includes(':')) {
+                const [hours, minutes] = timeInput.split(':');
+                dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+            } else {
+                return timeInput;
+            }
+
+            return dateObj.toLocaleTimeString('en-MY', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        async function fetchPrayerData(zoneCode) {
+            hideError();
+            loadingContainer.classList.remove('hidden');
+            tableContainer.classList.add('hidden');
+            zoneSelect.disabled = true;
+            gpsBtn.disabled = true;
+
+            try {
+                const response = await fetch(`https://api.waktusolat.app/v2/solat/${zoneCode}`);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const data = await response.json();
+                const currentDay = new Date().getDate();
+                let todayPrayer = null;
+
+                if (data && data.prayers && Array.isArray(data.prayers)) {
+                    todayPrayer = data.prayers.find(p => p.day === currentDay) || data.prayers[currentDay - 1];
+                }
+
+                if (!todayPrayer) throw new Error('Prayer times for today are unavailable.');
+
+                const parsedData = [
+                    { name: 'Imsak', time: formatTime(todayPrayer.imsak) },
+                    { name: 'Subuh', time: formatTime(todayPrayer.fajr || todayPrayer.subuh) },
+                    { name: 'Syuruk', time: formatTime(todayPrayer.syuruk) },
+                    { name: 'Zohor', time: formatTime(todayPrayer.dhuhr || todayPrayer.zohor) },
+                    { name: 'Asar', time: formatTime(todayPrayer.asr) },
+                    { name: 'Maghrib', time: formatTime(todayPrayer.maghrib) },
+                    { name: 'Isyak', time: formatTime(todayPrayer.isha || todayPrayer.isyak) }
+                ];
+
+                renderTable(parsedData);
+            } catch (err) {
+                showError(err.message || 'Failed to fetch prayer data. Please try again.');
+            } finally {
+                loadingContainer.classList.add('hidden');
+                zoneSelect.disabled = false;
+                gpsBtn.disabled = false;
+            }
+        }
+
+        function renderTable(dataArray) {
+            prayerTableBody.innerHTML = '';
+            dataArray.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = index % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+                
+                const tdName = document.createElement('td');
+                tdName.className = 'px-6 py-4 font-medium text-slate-900';
+                tdName.textContent = item.name;
+
+                const tdTime = document.createElement('td');
+                tdTime.className = 'px-6 py-4 text-right font-mono text-slate-700';
+                tdTime.textContent = item.time;
+
+                tr.appendChild(tdName);
+                tr.appendChild(tdTime);
+                prayerTableBody.appendChild(tr);
+            });
+            tableContainer.classList.remove('hidden');
+        }
+
+        function locateUser() {
+            if (!navigator.geolocation) {
+                showError('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            hideError();
+            loadingContainer.classList.remove('hidden');
+            tableContainer.classList.add('hidden');
+            zoneSelect.disabled = true;
+            gpsBtn.disabled = true;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    try {
+                        const response = await fetch(`https://api.waktusolat.app/v2/solat/gps/${latitude}/${longitude}`);
+                        if (!response.ok) throw new Error('Failed to resolve zone from coordinates.');
+                        
+                        const data = await response.json();
+                        if (data && data.zone) {
+                            zoneSelect.value = data.zone;
+                            fetchPrayerData(data.zone);
+                        } else {
+                            throw new Error('Zone data not found.');
+                        }
+                    } catch (err) {
+                        showError('Failed to identify zone from GPS coordinates.');
+                        loadingContainer.classList.add('hidden');
+                        zoneSelect.disabled = false;
+                        gpsBtn.disabled = false;
+                    }
+                },
+                (err) => {
+                    showError('Location access denied or failed.');
+                    loadingContainer.classList.add('hidden');
+                    zoneSelect.disabled = false;
+                    gpsBtn.disabled = false;
+                }
+            );
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
         Isyak: formatTime(todayPrayer.isha || todayPrayer.isyak)
       });
 
