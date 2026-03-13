@@ -150,7 +150,6 @@
 
             gpsBtn.addEventListener('click', locateUser);
 
-            // Default SGR01 for Ampang Jaya, Selangor
             fetchPrayerData('SGR01');
         }
 
@@ -182,7 +181,7 @@
         }
 
         function formatTime(timeInput) {
-            if (!timeInput) return '--:--';
+            if (!timeInput && timeInput !== 0) return '--:--';
             
             let dateObj = new Date();
             if (typeof timeInput === 'number') {
@@ -222,9 +221,27 @@
 
                 if (!todayPrayer) throw new Error('Prayer times for today are unavailable.');
 
+                // Determine Subuh time first
+                const subuhTimeInput = todayPrayer.fajr || todayPrayer.subuh;
+                
+                // Determine Imsak time (Calculate if missing)
+                let imsakTimeInput = todayPrayer.imsak;
+                if (!imsakTimeInput && subuhTimeInput) {
+                    if (typeof subuhTimeInput === 'number') {
+                        // Subtract 600 seconds (10 minutes) from Unix timestamp
+                        imsakTimeInput = subuhTimeInput - 600;
+                    } else if (typeof subuhTimeInput === 'string' && subuhTimeInput.includes(':')) {
+                        // Subtract 10 minutes from HH:mm string format
+                        const [hours, minutes] = subuhTimeInput.split(':');
+                        let dateObj = new Date();
+                        dateObj.setHours(parseInt(hours, 10), parseInt(minutes, 10) - 10, 0, 0);
+                        imsakTimeInput = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+                    }
+                }
+
                 const parsedData = [
-                    { name: 'Imsak', time: formatTime(todayPrayer.imsak) },
-                    { name: 'Subuh', time: formatTime(todayPrayer.fajr || todayPrayer.subuh) },
+                    { name: 'Imsak', time: formatTime(imsakTimeInput) },
+                    { name: 'Subuh', time: formatTime(subuhTimeInput) },
                     { name: 'Syuruk', time: formatTime(todayPrayer.syuruk) },
                     { name: 'Zohor', time: formatTime(todayPrayer.dhuhr || todayPrayer.zohor) },
                     { name: 'Asar', time: formatTime(todayPrayer.asr) },
@@ -309,4 +326,5 @@
     </script>
 </body>
 </html>
+
 
